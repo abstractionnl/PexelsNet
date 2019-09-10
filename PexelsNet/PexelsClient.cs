@@ -5,28 +5,27 @@ using System.Threading.Tasks;
 
 namespace PexelsNet
 {
-    public class PexelsClient
+    public class PexelsClient : IDisposable
     {
-        private readonly string _apiKey;
         private const string BaseUrl = "http://api.pexels.com/v1/";
 
-        private static readonly HttpClient Client = new HttpClient();
+        private readonly HttpClient _client = new HttpClient();
 
         public PexelsClient(string apiKey)
         {
-            Client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", apiKey);
+            _client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", apiKey);
         }
 
         public async Task<Page> SearchAsync(string query, int page = 1, int perPage = 15)
         {
-            HttpResponseMessage response = await Client.GetAsync(BaseUrl + "search?query=" + Uri.EscapeDataString(query) + "&per_page=" + perPage + "&page=" + page).ConfigureAwait(false);
+            HttpResponseMessage response = await _client.GetAsync(BaseUrl + "search?query=" + Uri.EscapeDataString(query) + "&per_page=" + perPage + "&page=" + page).ConfigureAwait(false);
 
             return await GetResultAsync(response).ConfigureAwait(false);
         }
 
         public async Task<Page> PopularAsync(int page = 1, int perPage = 15)
         {
-            HttpResponseMessage response = await Client.GetAsync(BaseUrl + "popular?per_page=" + perPage + "&page=" + page).ConfigureAwait(false);
+            HttpResponseMessage response = await _client.GetAsync(BaseUrl + "popular?per_page=" + perPage + "&page=" + page).ConfigureAwait(false);
 
             return await GetResultAsync(response).ConfigureAwait(false);
         }
@@ -43,6 +42,11 @@ namespace PexelsNet
             }
 
             throw new PexelsNetException(response.StatusCode, body);
+        }
+
+        public void Dispose()
+        {
+            _client?.Dispose();
         }
     }
 }
